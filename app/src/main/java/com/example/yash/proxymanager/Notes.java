@@ -37,11 +37,12 @@ public class Notes extends AppCompatActivity {
 
         switch(item.getItemId()){
             case R.id.add_note:
-                notes.add("");
+                notes.add("New note");
+                number_of_notes++;
+                note_adapter.notifyDataSetChanged();
                 Intent intent = new Intent(getApplicationContext(),Write_note.class);
                 intent.putExtra("noteId",number_of_notes);
                 startActivity(intent);
-                number_of_notes++;
                 final SharedPreferences sp = this.getSharedPreferences("com.example.yash.notes",MODE_PRIVATE);
                 sp.edit().putInt("amount",number_of_notes).apply();
                 note_adapter.notifyDataSetChanged();
@@ -73,10 +74,11 @@ public class Notes extends AppCompatActivity {
 
         if(number_of_notes == 0){
             notes.add("first");
+            number_of_notes++;
+            note_adapter.notifyDataSetChanged();
             Intent intent = new Intent(getApplicationContext(),Write_note.class);
             intent.putExtra("noteId",number_of_notes);
             startActivity(intent);
-            number_of_notes++;
             final SharedPreferences save = this.getSharedPreferences("com.example.yash.notes",MODE_PRIVATE);
             save.edit().putInt("amount",number_of_notes).apply();
             note_adapter.notifyDataSetChanged();

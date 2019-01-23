@@ -25,11 +25,11 @@ public class Write_note extends AppCompatActivity {
         final SharedPreferences sp = this.getSharedPreferences("com.example.yash.notes",MODE_PRIVATE);
 
         if(noteId != -1) {
-            String message = Notes.notes.get(noteId);
+            String message = Notes.notes.get(noteId-1);
             editnote.setText(message);
 
             if(noteId == 0){
-                editnote.setText("write here");
+                editnote.setHint("write here");
             }
 
             editnote.addTextChangedListener(new TextWatcher() {
@@ -40,7 +40,7 @@ public class Write_note extends AppCompatActivity {
 
                 @Override
                 public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                    Notes.notes.set(noteId,String.valueOf(charSequence));
+                    Notes.notes.set(noteId-1,String.valueOf(charSequence));
                     Notes.note_adapter.notifyDataSetChanged();
                     try {
                         sp.edit().putString("notes",ObjectSerializer.serialize(Notes.notes)).apply();

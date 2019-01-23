@@ -12,6 +12,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -49,11 +50,6 @@ public class MainActivity extends AppCompatActivity implements customButtonListe
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.menu_layout,menu);
         return super.onCreateOptionsMenu(menu);
-    }
-
-    @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
-        return super.onPrepareOptionsMenu(menu);
     }
 
 
@@ -198,6 +194,11 @@ public class MainActivity extends AppCompatActivity implements customButtonListe
             change_details();
         }
 
+        if(alarm_status == true){
+            Menu menu = navigationView.getMenu();
+            MenuItem item = (MenuItem) menu.findItem(R.id.nav_alarm);
+            item.setTitle("Disable Alarm");
+        }
         adapter = new myList(this, maintitle);
         list = (ListView) findViewById(R.id.list);
         adapter.setCustomButtonListner(MainActivity.this);
@@ -214,21 +215,32 @@ public class MainActivity extends AppCompatActivity implements customButtonListe
                         .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialogInterface, int k) {
-                                for(int i = position+1; i < maintitle.size(); i++) {
-                                    myList.attended_classes[i-1] = myList.attended_classes[i];
-                                    myList.total_classes[i-1] = myList.total_classes[i];
-                                    myList.percentage[i-1] = myList.percentage[i];
-                                    myList.attendedid[i-1] = myList.attendedid[i];
-                                    myList.totalid[i-1] = myList.totalid[i];
-                                    myList.percentid[i-1] = myList.percentid[i];
+                                if (maintitle.size() > 1) {
+                                    for(int i = position+1; i < maintitle.size(); i++) {
+                                        myList.attended_classes[i-1] = myList.attended_classes[i];
+                                        myList.total_classes[i-1] = myList.total_classes[i];
+                                        myList.percentage[i-1] = myList.percentage[i];
+                                        myList.attendedid[i-1] = myList.attendedid[i];
+                                        myList.totalid[i-1] = myList.totalid[i];
+                                        myList.percentid[i-1] = myList.percentid[i];
 
-                                    myList.attended_classes[i] = 0;
-                                    myList.total_classes[i] = 0;
-                                    myList.percentage[i] = 0;
-                                    myList.attendedid[i] =0;
-                                    myList.totalid[i] = 0;
-                                    myList.percentid[i] = 0;
+                                        myList.attended_classes[i] = 0;
+                                        myList.total_classes[i] = 0;
+                                        myList.percentage[i] = 0;
+                                        myList.attendedid[i] =0;
+                                        myList.totalid[i] = 0;
+                                        myList.percentid[i] = 0;
+                                    }
                                 }
+                                else{
+                                    myList.attended_classes[0] = 0;
+                                    myList.total_classes[0] = 0;
+                                    myList.percentage[0] = 0;
+                                    myList.attendedid[0] =0;
+                                    myList.totalid[0] = 0;
+                                    myList.percentid[0] = 0;
+                                }
+
                                 maintitle.remove(position);
                                 adapter.notifyDataSetChanged();
                                 try {
@@ -301,11 +313,7 @@ public class MainActivity extends AppCompatActivity implements customButtonListe
     //on subtraction button clicked
     @Override
     public void subtraction(int position, String value) {
-        if(myList.total_classes[position] >=1)
-        {
-            if(myList.attended_classes[position] >=1)
-                myList.attended_classes[position]--;
-        }
+        myList.total_classes[position]++;
         myList.percentage[position] = (double) (Double.valueOf(myList.attended_classes[position])/Double.valueOf(myList.total_classes[position]) )*100;
         myList.percentage[position] = Math.round(myList.percentage[position] * 100.0) / 100.0;
 
@@ -355,10 +363,8 @@ public class MainActivity extends AppCompatActivity implements customButtonListe
 
         if(item.getItemId() == R.id.nav_alarm){
             if(alarm_status == true) {
-                alarm_status = !alarm_status;
                 alarm_settings(true, item);
             } else{
-                alarm_status = !alarm_status;
                 alarm_settings(false, item);
             }
         }
@@ -380,10 +386,12 @@ public class MainActivity extends AppCompatActivity implements customButtonListe
         Intent alarmintent = new Intent(MainActivity.this, AlarmReceiver.class);
         final PendingIntent alarmIntent = PendingIntent.getBroadcast(MainActivity.this, 0, alarmintent, 0);
         final SharedPreferences sp = this.getSharedPreferences("com.example.yash.attendancemanager",MODE_PRIVATE);
-        sp.edit().putBoolean("check",alarm_status).apply();
-
         if(isActive == true) {
+            alarm_status = false ;
+            sp.edit().putBoolean("check",alarm_status).apply();
             alarmMgr.cancel(alarmIntent);
+            final String[] set ={"Enable Alarm"};
+            item.setTitle(set[0]);
             Toast.makeText(MainActivity.this, "Alarm off", Toast.LENGTH_SHORT).show();
 
         }else{
@@ -398,6 +406,7 @@ public class MainActivity extends AppCompatActivity implements customButtonListe
             layout.addView(hours);
             final EditText minutes = new EditText(context);
             minutes.setHint("Minutes");
+            minutes.setInputType(InputType.TYPE_CLASS_NUMBER);
             layout.addView(minutes);
             AlertDialog.Builder alertDialog = new AlertDialog.Builder(MainActivity.this);
             alertDialog.setTitle("Set time")
@@ -418,13 +427,24 @@ public class MainActivity extends AppCompatActivity implements customButtonListe
                                 calendar.setTimeInMillis(System.currentTimeMillis());
                                 calendar.set(Calendar.HOUR_OF_DAY, hour);
                                 calendar.set(Calendar.MINUTE, minute);
-                                alarmMgr.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(),
+//                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+//                                    alarmMgr.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(),alarmIntent);
+//                                else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
+//                                    alarmMgr.setExact(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), alarmIntent);
+//                                else
+//                                    alarmMgr.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(),alarmIntent);
+
+                                alarmMgr.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis()+5,
                                         1000 * 60 * 5, alarmIntent);
-//                                sp.edit().putInt("status", Alarm_status).apply();
                                 Toast.makeText(MainActivity.this, "Alarm set for " + hours.getText().toString() + ":" + minutes.getText().toString(), Toast.LENGTH_SHORT).show();
+                                alarm_status = true;
+                                sp.edit().putBoolean("check",alarm_status).apply();
                             } else {
+                                alarm_status = false ;
+                                sp.edit().putBoolean("check",alarm_status).apply();
                                 Toast.makeText(MainActivity.this, "Alarm not set", Toast.LENGTH_SHORT).show();
                             }
+
                         }
                     })
                     .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -432,6 +452,8 @@ public class MainActivity extends AppCompatActivity implements customButtonListe
 
                             set[0] = "Enable Alarm";
                             name.setTitle(set[0]);
+                            alarm_status = false ;
+                            sp.edit().putBoolean("check",alarm_status).apply();
                             Toast.makeText(MainActivity.this, "Alarm not set", Toast.LENGTH_SHORT).show();
                             dialog.cancel();
                         }
@@ -440,6 +462,9 @@ public class MainActivity extends AppCompatActivity implements customButtonListe
 
             item.setTitle(set[0]);
         }
+
+
+
     }
 
 
